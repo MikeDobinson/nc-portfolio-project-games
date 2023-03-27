@@ -60,5 +60,14 @@ describe('/api/reviews', () => {
           });
         });
     });
+    it('returns with error with incorrect review ID is entered', () => {
+      return request(app)
+        .get('/api/reviews/99')
+        .expect(404)
+        .then(({ body }) => {
+          const { msg } = body;
+          expect(msg).toBe('No review found with that ID');
+        });
+    });
   });
 });
