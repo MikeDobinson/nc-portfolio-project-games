@@ -10,6 +10,8 @@ exports.getReview = (req, res) => {
     .catch((err) => {
       if (err.status === 404) {
         res.status(404).send({ msg: err.msg });
+      } else {
+        res.status(400).send({ msg: 'Invalid request' });
       }
     });
 };
