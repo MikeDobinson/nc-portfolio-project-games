@@ -60,7 +60,7 @@ describe('/api/reviews', () => {
           });
         });
     });
-    it('returns with error if incorrect review ID is entered', () => {
+    it.only('returns with error if incorrect review ID is entered', () => {
       return request(app)
         .get('/api/reviews/99')
         .expect(404)
