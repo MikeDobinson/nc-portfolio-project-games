@@ -25,3 +25,14 @@ describe('api/categories', () => {
       });
   });
 });
+
+describe('invalid endpoint', () => {
+  it('404: Invalid URL', () => {
+    return request(app)
+      .get('/wrong-endpoint')
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe('Invalid URL');
+      });
+  });
+});
