@@ -14,7 +14,6 @@ exports.getReview = (req, res, next) => {
 
 exports.getAllReviews = (req, res, next) => {
   fetchAllReviews().then((reviews) => {
-    console.log(reviews);
     res.status(200).send({ reviews });
   });
 };

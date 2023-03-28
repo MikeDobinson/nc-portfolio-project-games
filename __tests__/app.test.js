@@ -3,7 +3,6 @@ const app = require('../app');
 const seed = require('../db/seeds/seed');
 const testData = require('../db/data/test-data/');
 const connection = require('../db/connection');
-const { get } = require('../app');
 
 beforeEach(() => seed(testData));
 afterAll(() => connection.end());
@@ -85,23 +84,20 @@ describe('/api/reviews', () => {
       .expect(200)
       .then(({ body }) => {
         const { reviews } = body;
-        const reviewsCopy = [...reviews];
-        const sortedReviews = reviewsCopy.sort((reviewA, reviewB) => {
-          return reviewB.created_at - reviewA.created_at;
-        });
-        expect(reviews).toEqual(sortedReviews);
+        expect(reviews).toBeSortedBy('created_at', { descending: true });
         expect(reviews).toHaveLength(13);
         reviews.forEach((review) => {
-          expect(typeof review).toBe('object');
-          expect(review).toHaveProperty('owner');
-          expect(review).toHaveProperty('title');
-          expect(review).toHaveProperty('review_id');
-          expect(review).toHaveProperty('category');
-          expect(review).toHaveProperty('review_img_url');
-          expect(review).toHaveProperty('created_at');
-          expect(review).toHaveProperty('votes');
-          expect(review).toHaveProperty('designer');
-          expect(review).toHaveProperty('comment_count');
+          expect(review).toMatchObject({
+            owner: expect.any(String),
+            title: expect.any(String),
+            review_id: expect.any(Number),
+            category: expect.any(String),
+            review_img_url: expect.any(String),
+            created_at: expect.any(String),
+            votes: expect.any(Number),
+            designer: expect.any(String),
+            comment_count: expect.any(Number),
+          });
         });
       });
   });
