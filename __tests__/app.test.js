@@ -79,4 +79,30 @@ describe('/api/reviews', () => {
         });
     });
   });
+  it('should return an array of review objects sorted by created_at in descending order', () => {
+    return request(app)
+      .get('/api/reviews')
+      .expect(200)
+      .then(({ body }) => {
+        const { reviews } = body;
+        const reviewsCopy = [...reviews];
+        const sortedReviews = reviewsCopy.sort((reviewA, reviewB) => {
+          return reviewB.created_at - reviewA.created_at;
+        });
+        expect(reviews).toEqual(sortedReviews);
+        expect(reviews).toHaveLength(13);
+        reviews.forEach((review) => {
+          expect(typeof review).toBe('object');
+          expect(review).toHaveProperty('owner');
+          expect(review).toHaveProperty('title');
+          expect(review).toHaveProperty('review_id');
+          expect(review).toHaveProperty('category');
+          expect(review).toHaveProperty('review_img_url');
+          expect(review).toHaveProperty('created_at');
+          expect(review).toHaveProperty('votes');
+          expect(review).toHaveProperty('designer');
+          expect(review).toHaveProperty('comment_count');
+        });
+      });
+  });
 });
