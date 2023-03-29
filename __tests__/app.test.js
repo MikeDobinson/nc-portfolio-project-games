@@ -99,7 +99,7 @@ describe('/api/reviews', () => {
             });
           });
       });
-      it.only('returns 404: no comments found if no comments assigned to an existing review ', () => {
+      it('returns 404: no comments found if no comments assigned to an existing review ', () => {
         return request(app)
           .get('/api/reviews/10/comments')
           .expect(404)
