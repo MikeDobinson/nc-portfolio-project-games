@@ -2,7 +2,11 @@ const db = require('../db/connection');
 
 exports.fetchReview = (reviewID) => {
   return db
-    .query(`SELECT * FROM reviews WHERE review_id = $1`, [reviewID])
+    .query(
+      `SELECT * FROM reviews 
+       WHERE review_id = $1`,
+      [reviewID]
+    )
     .then((result) => {
       if (!result.rows.length) {
         return Promise.reject({
@@ -24,6 +28,25 @@ exports.fetchAllReviews = () => {
       ORDER BY created_at DESC;`
     )
     .then((result) => {
+      return result.rows;
+    });
+};
+
+exports.fetchCommentsByReviewId = (reviewID) => {
+  return db
+    .query(
+      `SELECT * FROM comments 
+       WHERE review_id = $1 
+       ORDER BY created_at DESC`,
+      [reviewID]
+    )
+    .then((result) => {
+      if (result.rowCount === 0) {
+        return Promise.reject({
+          status: 404,
+          msg: 'No comments found',
+        });
+      }
       return result.rows;
     });
 };
