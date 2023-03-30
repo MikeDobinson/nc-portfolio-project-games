@@ -3,6 +3,7 @@ const {
   getReviewById,
   getAllReviews,
   getCommentsByReviewId,
+  postCommentOnReviewId,
 } = require('./controllers/reviews.controllers');
 const {
   handlePsqlErrors,
@@ -13,10 +14,14 @@ const {
 const express = require('express');
 const app = express();
 
+app.use(express.json());
+
 app.get('/api/categories', getAllCategories);
 app.get('/api/reviews/:review_id', getReviewById);
 app.get('/api/reviews', getAllReviews);
 app.get('/api/reviews/:review_id/comments', getCommentsByReviewId);
+
+app.post('/api/reviews/:review_id/comments', postCommentOnReviewId);
 
 app.get('/*', handleWrongFilepathErrors);
 app.use(handlePsqlErrors);

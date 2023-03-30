@@ -2,6 +2,7 @@ const {
   fetchReviewById,
   fetchAllReviews,
   fetchCommentsByReviewId,
+  createCommentOnReviewId,
 } = require('../models/reviews.models');
 
 exports.getReviewById = (req, res, next) => {
@@ -28,6 +29,22 @@ exports.getCommentsByReviewId = (req, res, next) => {
     })
     .then((comments) => {
       res.status(200).send({ comments });
+    })
+    .catch((err) => {
+      next(err);
+    });
+};
+
+exports.postCommentOnReviewId = (req, res, next) => {
+  const { review_id } = req.params;
+  const { username, body } = req.body;
+
+  fetchReviewById(review_id)
+    .then(() => {
+      return createCommentOnReviewId(review_id, username, body);
+    })
+    .then((comment) => {
+      res.status(201).send({ comment });
     })
     .catch((err) => {
       next(err);

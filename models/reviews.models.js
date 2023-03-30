@@ -1,11 +1,11 @@
 const db = require('../db/connection');
 
-exports.fetchReviewById = (reviewID) => {
+exports.fetchReviewById = (reviewId) => {
   return db
     .query(
       `SELECT * FROM reviews 
        WHERE review_id = $1`,
-      [reviewID]
+      [reviewId]
     )
     .then((result) => {
       if (!result.rows.length) {
@@ -32,15 +32,26 @@ exports.fetchAllReviews = () => {
     });
 };
 
-exports.fetchCommentsByReviewId = (reviewID) => {
+exports.fetchCommentsByReviewId = (reviewId) => {
   return db
     .query(
       `SELECT * FROM comments 
        WHERE review_id = $1 
        ORDER BY created_at DESC`,
-      [reviewID]
+      [reviewId]
     )
     .then((result) => {
       return result.rows;
+    });
+};
+
+exports.createCommentOnReviewId = (reviewId, username, body) => {
+  return db
+    .query(
+      `INSERT INTO comments( review_id, author, body) VALUES ($1, $2, $3) RETURNING *`,
+      [reviewId, username, body]
+    )
+    .then(({ rows }) => {
+      return rows[0];
     });
 };
