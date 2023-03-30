@@ -4,6 +4,7 @@ const seed = require('../db/seeds/seed');
 const testData = require('../db/data/test-data/');
 const connection = require('../db/connection');
 const { expect } = require('@jest/globals');
+const bodyParser = require('body-parser');
 
 beforeEach(() => seed(testData));
 afterAll(() => connection.end());
@@ -135,11 +136,25 @@ describe('/api/reviews', () => {
               });
             });
         });
-        it.only('returns 400 if trying to post to a review ID of invalid type', () => {
+        it('returns 400 if trying to post to a review ID of invalid type', () => {
           return request(app)
             .post('/api/reviews/number/comments')
             .send({ username: 'dav3rid', body: 'great review' })
-            .expect(400);
+            .expect(400)
+            .then(({ body }) => {
+              const { msg } = body;
+              expect(msg).toBe('Invalid request');
+            });
+        });
+        it('returns 404 if trying to post to a review ID that doesnt exist yet', () => {
+          return request(app)
+            .post('/api/reviews/999/comments')
+            .send({ username: 'dav3rid', body: 'great review' })
+            .expect(404)
+            .then(({ body }) => {
+              const { msg } = body;
+              expect(msg).toBe('id not found');
+            });
         });
       });
     });
