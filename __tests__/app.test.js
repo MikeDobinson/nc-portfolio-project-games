@@ -166,11 +166,11 @@ describe('/api/reviews', () => {
               expect(msg).toBe('Invalid format');
             });
         });
-        it('returns 400 if username does not exist in user db', () => {
+        it('returns 404 if username does not exist in user db', () => {
           return request(app)
             .post('/api/reviews/3/comments')
             .send({ username: 'mike_d', body: 'good review' })
-            .expect(400)
+            .expect(404)
             .then(({ body }) => {
               const { msg } = body;
               expect(msg).toBe('User not found');
