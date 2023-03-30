@@ -119,10 +119,9 @@ describe('/api/reviews', () => {
       });
       describe('POST', () => {
         it('returns 201 after a succesful post ', () => {
-          const newComment = { username: 'dav3rid', body: 'great review' };
           return request(app)
             .post('/api/reviews/3/comments')
-            .send(newComment)
+            .send({ username: 'dav3rid', body: 'great review' })
             .expect(201)
             .then(({ body }) => {
               const { comment } = body;
@@ -135,6 +134,12 @@ describe('/api/reviews', () => {
                 created_at: expect.any(String),
               });
             });
+        });
+        it.only('returns 400 if trying to post to a review ID of invalid type', () => {
+          return request(app)
+            .post('/api/reviews/number/comments')
+            .send({ username: 'dav3rid', body: 'great review' })
+            .expect(400);
         });
       });
     });
