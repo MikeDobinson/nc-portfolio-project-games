@@ -4,6 +4,7 @@ const {
   getAllReviews,
   getCommentsByReviewId,
   postCommentOnReviewId,
+  patchReviewOnId,
 } = require('./controllers/reviews.controllers');
 const {
   handlePsqlErrors,
@@ -22,6 +23,8 @@ app.get('/api/reviews', getAllReviews);
 app.get('/api/reviews/:review_id/comments', getCommentsByReviewId);
 
 app.post('/api/reviews/:review_id/comments', postCommentOnReviewId);
+
+app.patch('/api/reviews/:review_id', patchReviewOnId);
 
 app.get('/*', handleWrongFilepathErrors);
 app.use(handlePsqlErrors);
