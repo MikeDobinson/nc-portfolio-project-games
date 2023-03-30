@@ -1,6 +1,6 @@
 const db = require('../db/connection');
 
-exports.fetchReview = (reviewID) => {
+exports.fetchReviewById = (reviewID) => {
   return db
     .query(
       `SELECT * FROM reviews 
@@ -41,12 +41,6 @@ exports.fetchCommentsByReviewId = (reviewID) => {
       [reviewID]
     )
     .then((result) => {
-      if (result.rowCount === 0) {
-        return Promise.reject({
-          status: 404,
-          msg: 'No comments found',
-        });
-      }
       return result.rows;
     });
 };

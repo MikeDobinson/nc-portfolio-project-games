@@ -91,7 +91,7 @@ describe('/api/reviews', () => {
               expect(comment).toMatchObject({
                 comment_id: expect.any(Number),
                 body: expect.any(String),
-                review_id: expect.any(Number),
+                review_id: 2,
                 author: expect.any(String),
                 votes: expect.any(Number),
                 created_at: expect.any(String),
@@ -99,14 +99,20 @@ describe('/api/reviews', () => {
             });
           });
       });
-      it('returns 404: no comments found if no comments assigned to an existing review ', () => {
+      it('returns 200: no comments found if no comments assigned to an existing review ', () => {
         return request(app)
           .get('/api/reviews/10/comments')
-          .expect(404)
+          .expect(200)
           .then(({ body }) => {
-            const { msg } = body;
-            expect(msg).toBe('No comments found');
+            const { comments } = body;
+            expect(comments).toEqual([]);
           });
+      });
+      it('returns 404 if url given with review ID that is unassigned', () => {
+        return request(app).get('/api/reviews/999/comments').expect(404);
+      });
+      it('returns 400 if url given with review ID of wrong type', () => {
+        return request(app).get('/api/reviews/number/comments').expect(400);
       });
     });
   });

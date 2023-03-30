@@ -1,13 +1,13 @@
 const {
-  fetchReview,
+  fetchReviewById,
   fetchAllReviews,
   fetchCommentsByReviewId,
 } = require('../models/reviews.models');
 
-exports.getReview = (req, res, next) => {
+exports.getReviewById = (req, res, next) => {
   const { review_id } = req.params;
 
-  fetchReview(review_id)
+  fetchReviewById(review_id)
     .then((review) => {
       res.status(200).send({ review });
     })
@@ -22,9 +22,14 @@ exports.getAllReviews = (req, res, next) => {
 
 exports.getCommentsByReviewId = (req, res, next) => {
   const { review_id } = req.params;
-  fetchCommentsByReviewId(review_id)
+  fetchReviewById(review_id)
+    .then(() => {
+      return fetchCommentsByReviewId(review_id);
+    })
     .then((comments) => {
       res.status(200).send({ comments });
     })
-    .catch((err) => next(err));
+    .catch((err) => {
+      next(err);
+    });
 };
