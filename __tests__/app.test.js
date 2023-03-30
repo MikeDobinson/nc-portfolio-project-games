@@ -77,6 +77,44 @@ describe('/api/reviews', () => {
           expect(msg).toBe('Invalid request');
         });
     });
+    describe('GET /api/reviews/:review_id/comments', () => {
+      it('returns an array of comments sorted by created_at in desc order', () => {
+        return request(app)
+          .get('/api/reviews/2/comments')
+          .expect(200)
+          .then(({ body }) => {
+            const { comments } = body;
+            expect(Array.isArray(comments)).toBe(true);
+            expect(comments.length).toBe(3);
+            expect(comments).toBeSortedBy('created_at', { descending: true });
+            comments.forEach((comment) => {
+              expect(comment).toMatchObject({
+                comment_id: expect.any(Number),
+                body: expect.any(String),
+                review_id: 2,
+                author: expect.any(String),
+                votes: expect.any(Number),
+                created_at: expect.any(String),
+              });
+            });
+          });
+      });
+      it('returns 200: no comments found if no comments assigned to an existing review ', () => {
+        return request(app)
+          .get('/api/reviews/10/comments')
+          .expect(200)
+          .then(({ body }) => {
+            const { comments } = body;
+            expect(comments).toEqual([]);
+          });
+      });
+      it('returns 404 if url given with review ID that is unassigned', () => {
+        return request(app).get('/api/reviews/999/comments').expect(404);
+      });
+      it('returns 400 if url given with review ID of wrong type', () => {
+        return request(app).get('/api/reviews/number/comments').expect(400);
+      });
+    });
   });
   it('should return an array of review objects sorted by created_at in descending order', () => {
     return request(app)
