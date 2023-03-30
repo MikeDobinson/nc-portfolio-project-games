@@ -153,7 +153,48 @@ describe('/api/reviews', () => {
             .expect(404)
             .then(({ body }) => {
               const { msg } = body;
-              expect(msg).toBe('id not found');
+              expect(msg).toBe('No review found with that ID');
+            });
+        });
+        it('returns 400 if trying to post a comment in the wrong format', () => {
+          return request(app)
+            .post('/api/reviews/3/comments')
+            .send({ body: 'good review' })
+            .expect(400)
+            .then(({ body }) => {
+              const { msg } = body;
+              expect(msg).toBe('Invalid format');
+            });
+        });
+        it('returns 400 if username does not exist in user db', () => {
+          return request(app)
+            .post('/api/reviews/3/comments')
+            .send({ username: 'mike_d', body: 'good review' })
+            .expect(400)
+            .then(({ body }) => {
+              const { msg } = body;
+              expect(msg).toBe('User not found');
+            });
+        });
+        it('returns 200 and works as normal if extra kvs are added on the object, ignoring them', () => {
+          return request(app)
+            .post('/api/reviews/3/comments')
+            .send({
+              username: 'dav3rid',
+              body: 'great review',
+              hotel: 'trivago',
+            })
+            .expect(201)
+            .then(({ body }) => {
+              const { comment } = body;
+              expect(comment).toMatchObject({
+                comment_id: expect.any(Number),
+                body: 'great review',
+                review_id: 3,
+                author: 'dav3rid',
+                votes: 0,
+                created_at: expect.any(String),
+              });
             });
         });
       });
