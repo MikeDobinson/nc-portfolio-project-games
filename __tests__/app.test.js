@@ -118,7 +118,7 @@ describe('/api/reviews', () => {
         });
       });
       describe('POST', () => {
-        it.only('returns 201 after a succesful post ', () => {
+        it('returns 201 after a succesful post ', () => {
           const newComment = { username: 'dav3rid', body: 'great review' };
           return request(app)
             .post('/api/reviews/3/comments')
