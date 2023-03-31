@@ -3,7 +3,6 @@ const app = require('../app');
 const seed = require('../db/seeds/seed');
 const testData = require('../db/data/test-data/');
 const connection = require('../db/connection');
-const { expect } = require('@jest/globals');
 
 beforeEach(() => seed(testData));
 afterAll(() => connection.end());
@@ -39,28 +38,109 @@ describe('invalid endpoint', () => {
 });
 
 describe('/api/reviews', () => {
-  it('should return an array of review objects sorted by created_at in descending order', () => {
-    return request(app)
-      .get('/api/reviews')
-      .expect(200)
-      .then(({ body }) => {
-        const { reviews } = body;
-        expect(reviews).toBeSortedBy('created_at', { descending: true });
-        expect(reviews).toHaveLength(13);
-        reviews.forEach((review) => {
-          expect(review).toMatchObject({
-            owner: expect.any(String),
-            title: expect.any(String),
-            review_id: expect.any(Number),
-            category: expect.any(String),
-            review_img_url: expect.any(String),
-            created_at: expect.any(String),
-            votes: expect.any(Number),
-            designer: expect.any(String),
-            comment_count: expect.any(Number),
+  describe('GET', () => {
+    it('should return an array of review objects sorted by created_at in descending order', () => {
+      return request(app)
+        .get('/api/reviews')
+        .expect(200)
+        .then(({ body }) => {
+          const { reviews } = body;
+          expect(reviews).toBeSortedBy('created_at', { descending: true });
+          expect(reviews).toHaveLength(13);
+          reviews.forEach((review) => {
+            expect(review).toMatchObject({
+              owner: expect.any(String),
+              title: expect.any(String),
+              review_id: expect.any(Number),
+              category: expect.any(String),
+              review_img_url: expect.any(String),
+              created_at: expect.any(String),
+              votes: expect.any(Number),
+              designer: expect.any(String),
+              comment_count: expect.any(Number),
+            });
           });
         });
+    });
+  });
+  describe('QUERIES', () => {
+    describe('category', () => {
+      it('return an array of review objects where all categories match an input', () => {
+        return request(app)
+          .get('/api/reviews?category=dexterity')
+          .expect(200)
+          .then(({ body }) => {
+            const { reviews } = body;
+            expect(reviews.length).not.toBe(0);
+            reviews.forEach((review) => {
+              expect(review.category).toBe('dexterity');
+            });
+          });
       });
+      it('returns 404 if given category is not present in the table', () => {
+        return request(app)
+          .get('/api/reviews?category=video')
+          .expect(404)
+          .then(({ body }) => {
+            const { msg } = body;
+            expect(msg).toBe('Reviews not found');
+          });
+      });
+    });
+    describe('order', () => {
+      it('should be able to change order of sort', () => {
+        return request(app)
+          .get('/api/reviews?order=ASC')
+          .expect(200)
+          .then(({ body }) => {
+            const { reviews } = body;
+            expect(reviews).toBeSortedBy('created_at', { ascending: true });
+          });
+      });
+      it('should return 400 if anything other than ASC or DESC are input', () => {
+        return request(app)
+          .get('/api/reviews?order=ABC')
+          .expect(400)
+          .then(({ body }) => {
+            const { msg } = body;
+            expect(msg).toBe('Invalid query');
+          });
+      });
+    });
+    describe('sort_by', () => {
+      it('should change the key that the array is sorted by', () => {
+        return request(app)
+          .get('/api/reviews?sort_by=review_id')
+          .expect(200)
+          .then(({ body }) => {
+            const { reviews } = body;
+            expect(reviews).toBeSortedBy('review_id', { descending: true });
+          });
+      });
+      it('should return 400 if anything other than existing table columns are input', () => {
+        return request(app)
+          .get('/api/reviews?sort_by=anything')
+          .expect(400)
+          .then(({ body }) => {
+            const { msg } = body;
+            expect(msg).toBe('Bad sort query');
+          });
+      });
+    });
+    describe('multiple queries', () => {
+      it('is able to handle multiple queries at once', () => {
+        return request(app)
+          .get('/api/reviews?category=social deduction&sort_by=owner&order=ASC')
+          .expect(200)
+          .then(({ body }) => {
+            const { reviews } = body;
+            expect(reviews).toBeSortedBy('owner', { ascending: true });
+            reviews.forEach((review) => {
+              expect(review.category).toBe('social deduction');
+            });
+          });
+      });
+    });
   });
 });
 
