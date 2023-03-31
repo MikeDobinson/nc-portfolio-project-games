@@ -4,7 +4,6 @@ const seed = require('../db/seeds/seed');
 const testData = require('../db/data/test-data/');
 const connection = require('../db/connection');
 const { expect } = require('@jest/globals');
-const bodyParser = require('body-parser');
 
 beforeEach(() => seed(testData));
 afterAll(() => connection.end());
@@ -233,6 +232,14 @@ describe('/api/comments/:comment_id', () => {
         .expect(204)
         .then(({ body }) => {
           expect(body).toEqual({});
+        })
+        .then(() => {
+          return connection.query(
+            `SELECT * FROM comments WHERE comment_id = 2`
+          );
+        })
+        .then(({ rows }) => {
+          expect(rows.length).toBe(0);
         });
     });
     it('returns 404 if given a comment ID that does not exist/', () => {
