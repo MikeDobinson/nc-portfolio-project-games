@@ -8,7 +8,7 @@ const { expect } = require('@jest/globals');
 beforeEach(() => seed(testData));
 afterAll(() => connection.end());
 
-describe('api/categories', () => {
+describe('/api/categories', () => {
   it('GET 200: returns an array of category objects, with each object having keys of `slug` and `description`', () => {
     return request(app)
       .get('/api/categories')
@@ -39,7 +39,33 @@ describe('invalid endpoint', () => {
 });
 
 describe('/api/reviews', () => {
-  describe('/api/reviews/:review_id', () => {
+  it('should return an array of review objects sorted by created_at in descending order', () => {
+    return request(app)
+      .get('/api/reviews')
+      .expect(200)
+      .then(({ body }) => {
+        const { reviews } = body;
+        expect(reviews).toBeSortedBy('created_at', { descending: true });
+        expect(reviews).toHaveLength(13);
+        reviews.forEach((review) => {
+          expect(review).toMatchObject({
+            owner: expect.any(String),
+            title: expect.any(String),
+            review_id: expect.any(Number),
+            category: expect.any(String),
+            review_img_url: expect.any(String),
+            created_at: expect.any(String),
+            votes: expect.any(Number),
+            designer: expect.any(String),
+            comment_count: expect.any(Number),
+          });
+        });
+      });
+  });
+});
+
+describe('/api/reviews/:review_id', () => {
+  describe('GET', () => {
     it('returns an object with the correct keys', () => {
       return request(app)
         .get('/api/reviews/2')
@@ -78,149 +104,163 @@ describe('/api/reviews', () => {
           expect(msg).toBe('Invalid request');
         });
     });
-    describe('/api/reviews/:review_id/comments', () => {
-      describe('GET', () => {
-        it('returns an array of comments sorted by created_at in desc order', () => {
-          return request(app)
-            .get('/api/reviews/2/comments')
-            .expect(200)
-            .then(({ body }) => {
-              const { comments } = body;
-              expect(Array.isArray(comments)).toBe(true);
-              expect(comments.length).toBe(3);
-              expect(comments).toBeSortedBy('created_at', { descending: true });
-              comments.forEach((comment) => {
-                expect(comment).toMatchObject({
-                  comment_id: expect.any(Number),
-                  body: expect.any(String),
-                  review_id: 2,
-                  author: expect.any(String),
-                  votes: expect.any(Number),
-                  created_at: expect.any(String),
-                });
-              });
-            });
+  });
+  describe('PATCH', () => {
+    it('returns 200 with the updated review object', () => {
+      return request(app)
+        .patch('/api/reviews/3')
+        .send({ inc_votes: 2 })
+        .expect(200)
+        .then(({ body }) => {
+          const { updatedReview } = body;
+          expect(updatedReview.votes).toBe(7);
         });
-        it('returns 200: no comments found if no comments assigned to an existing review ', () => {
-          return request(app)
-            .get('/api/reviews/10/comments')
-            .expect(200)
-            .then(({ body }) => {
-              const { comments } = body;
-              expect(comments).toEqual([]);
-            });
-        });
-        it('returns 404 if url given with review ID that is unassigned', () => {
-          return request(app).get('/api/reviews/999/comments').expect(404);
-        });
-        it('returns 400 if url given with review ID of wrong type', () => {
-          return request(app).get('/api/reviews/number/comments').expect(400);
-        });
-      });
-      describe('POST', () => {
-        it('returns 201 after a succesful post ', () => {
-          return request(app)
-            .post('/api/reviews/3/comments')
-            .send({ username: 'dav3rid', body: 'great review' })
-            .expect(201)
-            .then(({ body }) => {
-              const { comment } = body;
-              expect(comment).toMatchObject({
-                comment_id: expect.any(Number),
-                body: 'great review',
-                review_id: 3,
-                author: 'dav3rid',
-                votes: 0,
-                created_at: expect.any(String),
-              });
-            });
-        });
-        it('returns 400 if trying to post to a review ID of invalid type', () => {
-          return request(app)
-            .post('/api/reviews/number/comments')
-            .send({ username: 'dav3rid', body: 'great review' })
-            .expect(400)
-            .then(({ body }) => {
-              const { msg } = body;
-              expect(msg).toBe('Invalid request');
-            });
-        });
-        it('returns 404 if trying to post to a review ID that doesnt exist yet', () => {
-          return request(app)
-            .post('/api/reviews/999/comments')
-            .send({ username: 'dav3rid', body: 'great review' })
-            .expect(404)
-            .then(({ body }) => {
-              const { msg } = body;
-              expect(msg).toBe('No review found with that ID');
-            });
-        });
-        it('returns 400 if trying to post a comment in the wrong format', () => {
-          return request(app)
-            .post('/api/reviews/3/comments')
-            .send({ body: 'good review' })
-            .expect(400)
-            .then(({ body }) => {
-              const { msg } = body;
-              expect(msg).toBe('Invalid format');
-            });
-        });
-        it('returns 404 if username does not exist in user db', () => {
-          return request(app)
-            .post('/api/reviews/3/comments')
-            .send({ username: 'mike_d', body: 'good review' })
-            .expect(404)
-            .then(({ body }) => {
-              const { msg } = body;
-              expect(msg).toBe('User not found');
-            });
-        });
-        it('returns 200 and works as normal if extra kvs are added on the object, ignoring them', () => {
-          return request(app)
-            .post('/api/reviews/3/comments')
-            .send({
-              username: 'dav3rid',
-              body: 'great review',
-              hotel: 'trivago',
-            })
-            .expect(201)
-            .then(({ body }) => {
-              const { comment } = body;
-              expect(comment).toMatchObject({
-                comment_id: expect.any(Number),
-                body: 'great review',
-                review_id: 3,
-                author: 'dav3rid',
-                votes: 0,
-                created_at: expect.any(String),
-              });
-            });
-        });
-      });
+    });
+    it('should return 400 if given an ID of the wrong data type', () => {
+      return request(app)
+        .patch('/api/reviews/number')
+        .send({ inc_votes: 2 })
+        .expect(400);
+    });
+    it('should return 404 if given an ID that is not yet assigned to a review', () => {
+      return request(app)
+        .patch('/api/reviews/999')
+        .send({ inc_votes: 2 })
+        .expect(404);
+    });
+    it('should return 400 if given an object with the wrong key', () => {
+      return request(app)
+        .patch('/api/reviews/10')
+        .send({ incvotes: 2 })
+        .expect(400);
+    });
+    it('returns 400 if given an object with the wrong value type', () => {
+      return request(app)
+        .patch('/api/reviews/10')
+        .send({ inc_votes: 'hello' })
+        .expect(400);
     });
   });
-  it('should return an array of review objects sorted by created_at in descending order', () => {
-    return request(app)
-      .get('/api/reviews')
-      .expect(200)
-      .then(({ body }) => {
-        const { reviews } = body;
-        expect(reviews).toBeSortedBy('created_at', { descending: true });
-        expect(reviews).toHaveLength(13);
-        reviews.forEach((review) => {
-          expect(review).toMatchObject({
-            owner: expect.any(String),
-            title: expect.any(String),
-            review_id: expect.any(Number),
-            category: expect.any(String),
-            review_img_url: expect.any(String),
-            created_at: expect.any(String),
-            votes: expect.any(Number),
-            designer: expect.any(String),
-            comment_count: expect.any(Number),
+});
+
+describe('/api/reviews/:review_id/comments', () => {
+  describe('GET', () => {
+    it('returns an array of comments sorted by created_at in desc order', () => {
+      return request(app)
+        .get('/api/reviews/2/comments')
+        .expect(200)
+        .then(({ body }) => {
+          const { comments } = body;
+          expect(Array.isArray(comments)).toBe(true);
+          expect(comments.length).toBe(3);
+          expect(comments).toBeSortedBy('created_at', { descending: true });
+          comments.forEach((comment) => {
+            expect(comment).toMatchObject({
+              comment_id: expect.any(Number),
+              body: expect.any(String),
+              review_id: 2,
+              author: expect.any(String),
+              votes: expect.any(Number),
+              created_at: expect.any(String),
+            });
           });
         });
-      });
+    });
+    it('returns 200: no comments found if no comments assigned to an existing review ', () => {
+      return request(app)
+        .get('/api/reviews/10/comments')
+        .expect(200)
+        .then(({ body }) => {
+          const { comments } = body;
+          expect(comments).toEqual([]);
+        });
+    });
+    it('returns 404 if url given with review ID that is unassigned', () => {
+      return request(app).get('/api/reviews/999/comments').expect(404);
+    });
+    it('returns 400 if url given with review ID of wrong type', () => {
+      return request(app).get('/api/reviews/number/comments').expect(400);
+    });
+  });
+  describe('POST', () => {
+    it('returns 201 after a succesful post ', () => {
+      return request(app)
+        .post('/api/reviews/3/comments')
+        .send({ username: 'dav3rid', body: 'great review' })
+        .expect(201)
+        .then(({ body }) => {
+          const { comment } = body;
+          expect(comment).toMatchObject({
+            comment_id: expect.any(Number),
+            body: 'great review',
+            review_id: 3,
+            author: 'dav3rid',
+            votes: 0,
+            created_at: expect.any(String),
+          });
+        });
+    });
+    it('returns 400 if trying to post to a review ID of invalid type', () => {
+      return request(app)
+        .post('/api/reviews/number/comments')
+        .send({ username: 'dav3rid', body: 'great review' })
+        .expect(400)
+        .then(({ body }) => {
+          const { msg } = body;
+          expect(msg).toBe('Invalid request');
+        });
+    });
+    it('returns 404 if trying to post to a review ID that doesnt exist yet', () => {
+      return request(app)
+        .post('/api/reviews/999/comments')
+        .send({ username: 'dav3rid', body: 'great review' })
+        .expect(404)
+        .then(({ body }) => {
+          const { msg } = body;
+          expect(msg).toBe('No review found with that ID');
+        });
+    });
+    it('returns 400 if trying to post a comment in the wrong format', () => {
+      return request(app)
+        .post('/api/reviews/3/comments')
+        .send({ body: 'good review' })
+        .expect(400)
+        .then(({ body }) => {
+          const { msg } = body;
+          expect(msg).toBe('Invalid format');
+        });
+    });
+    it('returns 404 if username does not exist in user db', () => {
+      return request(app)
+        .post('/api/reviews/3/comments')
+        .send({ username: 'mike_d', body: 'good review' })
+        .expect(404)
+        .then(({ body }) => {
+          const { msg } = body;
+          expect(msg).toBe('User not found');
+        });
+    });
+    it('returns 200 and works as normal if extra kvs are added on the object, ignoring them', () => {
+      return request(app)
+        .post('/api/reviews/3/comments')
+        .send({
+          username: 'dav3rid',
+          body: 'great review',
+          hotel: 'trivago',
+        })
+        .expect(201)
+        .then(({ body }) => {
+          const { comment } = body;
+          expect(comment).toMatchObject({
+            comment_id: expect.any(Number),
+            body: 'great review',
+            review_id: 3,
+            author: 'dav3rid',
+            votes: 0,
+            created_at: expect.any(String),
+          });
+        });
+    });
   });
 });
 
