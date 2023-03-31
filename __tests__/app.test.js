@@ -4,7 +4,6 @@ const seed = require('../db/seeds/seed');
 const testData = require('../db/data/test-data/');
 const connection = require('../db/connection');
 const { expect } = require('@jest/globals');
-const bodyParser = require('body-parser');
 
 beforeEach(() => seed(testData));
 afterAll(() => connection.end());
@@ -260,6 +259,45 @@ describe('/api/reviews/:review_id/comments', () => {
             votes: 0,
             created_at: expect.any(String),
           });
+        });
+    });
+  });
+});
+
+describe('/api/comments/:comment_id', () => {
+  describe('DELETE', () => {
+    it('returns 204 and deletes the relevant comment from the table', () => {
+      return request(app)
+        .delete('/api/comments/2')
+        .expect(204)
+        .then(({ body }) => {
+          expect(body).toEqual({});
+        })
+        .then(() => {
+          return connection.query(
+            `SELECT * FROM comments WHERE comment_id = 2`
+          );
+        })
+        .then(({ rows }) => {
+          expect(rows.length).toBe(0);
+        });
+    });
+    it('returns 404 if given a comment ID that does not exist/', () => {
+      return request(app)
+        .delete('/api/comments/999')
+        .expect(404)
+        .then(({ body }) => {
+          const { msg } = body;
+          expect(msg).toBe('No comment found with that ID');
+        });
+    });
+    it('returns 400 if given a comment ID of wrong type', () => {
+      return request(app)
+        .delete('/api/comments/number')
+        .expect(400)
+        .then(({ body }) => {
+          const { msg } = body;
+          expect(msg).toBe('Invalid request');
         });
     });
   });

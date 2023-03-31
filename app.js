@@ -12,6 +12,7 @@ const {
   handle500statuses,
   handleWrongFilepathErrors,
 } = require('./controllers/errors.controllers');
+const { deleteCommentById } = require('./controllers/comments.controllers');
 const express = require('express');
 const app = express();
 
@@ -23,6 +24,8 @@ app.get('/api/reviews', getAllReviews);
 app.get('/api/reviews/:review_id/comments', getCommentsByReviewId);
 
 app.post('/api/reviews/:review_id/comments', postCommentOnReviewId);
+
+app.delete('/api/comments/:comment_id', deleteCommentById);
 
 app.patch('/api/reviews/:review_id', patchReviewOnId);
 
