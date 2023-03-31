@@ -21,7 +21,7 @@ exports.fetchReviewById = (reviewId) => {
 exports.fetchAllReviews = (
   category,
   order = 'DESC',
-  sorted_by = 'created_at'
+  sort_by = 'created_at'
 ) => {
   const queryParameters = [];
   if (!['ASC', 'DESC'].includes(order)) {
@@ -39,7 +39,7 @@ exports.fetchAllReviews = (
       'title',
       'votes',
       'comment_count',
-    ].includes(sorted_by)
+    ].includes(sort_by)
   ) {
     return Promise.reject({ status: 400, msg: 'Bad sort query' });
   }
@@ -63,10 +63,10 @@ exports.fetchAllReviews = (
   }
 
   fetchAllReviewsSQL += `GROUP BY reviews.review_id 
-  ORDER BY ${sorted_by} ${order}`;
+  ORDER BY ${sort_by} ${order}`;
 
   return db.query(fetchAllReviewsSQL, queryParameters).then(({ rows }) => {
-    if (rows.length === 0) {
+    if (!rows.length) {
       return Promise.reject({ status: 404, msg: 'Reviews not found' });
     } else {
       return rows;
@@ -78,7 +78,7 @@ exports.fetchCommentsByReviewId = (reviewId) => {
   return db
     .query(
       `SELECT * FROM comments 
-       WHERE review_id = ($1) 
+       WHERE review_id = $1
        ORDER BY created_at DESC`,
       [reviewId]
     )

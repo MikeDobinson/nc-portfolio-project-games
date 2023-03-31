@@ -3,8 +3,6 @@ const app = require('../app');
 const seed = require('../db/seeds/seed');
 const testData = require('../db/data/test-data/');
 const connection = require('../db/connection');
-const { expect } = require('@jest/globals');
-const bodyParser = require('body-parser');
 
 beforeEach(() => seed(testData));
 afterAll(() => connection.end());
@@ -109,10 +107,10 @@ describe('/api/reviews', () => {
           });
       });
     });
-    describe('sorted_by', () => {
+    describe('sort_by', () => {
       it('should change the key that the array is sorted by', () => {
         return request(app)
-          .get('/api/reviews?sorted_by=review_id')
+          .get('/api/reviews?sort_by=review_id')
           .expect(200)
           .then(({ body }) => {
             const { reviews } = body;
@@ -121,11 +119,25 @@ describe('/api/reviews', () => {
       });
       it('should return 400 if anything other than existing table columns are input', () => {
         return request(app)
-          .get('/api/reviews?sorted_by=anything')
+          .get('/api/reviews?sort_by=anything')
           .expect(400)
           .then(({ body }) => {
             const { msg } = body;
             expect(msg).toBe('Bad sort query');
+          });
+      });
+    });
+    describe('multiple queries', () => {
+      it('is able to handle multiple queries at once', () => {
+        return request(app)
+          .get('/api/reviews?category=social deduction&sort_by=owner&order=ASC')
+          .expect(200)
+          .then(({ body }) => {
+            const { reviews } = body;
+            expect(reviews).toBeSortedBy('owner', { ascending: true });
+            reviews.forEach((review) => {
+              expect(review.category).toBe('social deduction');
+            });
           });
       });
     });
