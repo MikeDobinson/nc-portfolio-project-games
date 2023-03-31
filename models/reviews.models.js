@@ -18,25 +18,40 @@ exports.fetchReviewById = (reviewId) => {
     });
 };
 
-exports.fetchAllReviews = () => {
-  return db
-    .query(
-      `SELECT owner, title, reviews.review_id, category, review_img_url, reviews.created_at, reviews.votes, designer, CAST(COUNT(comments) AS INT) AS comment_count 
-      FROM reviews 
-      LEFT JOIN comments ON reviews.review_id = comments.review_id 
-      GROUP BY reviews.review_id 
-      ORDER BY created_at DESC;`
-    )
-    .then((result) => {
-      return result.rows;
-    });
+exports.fetchAllReviews = (category) => {
+  const queryParameters = [];
+  let fetchAllReviewsSQL = `
+  SELECT 
+    reviews.category, reviews.created_at, 
+    reviews.designer, reviews.owner, 
+    reviews.review_id, reviews.review_img_url, 
+    reviews.title, reviews.votes, 
+    CAST(COUNT(comments.review_id) AS INT) AS comment_count
+  FROM 
+    reviews 
+  LEFT JOIN comments ON reviews.review_id=comments.review_id
+  `;
+
+  if (category) {
+    fetchAllReviewsSQL += ` 
+    WHERE reviews.category = $1 `;
+    queryParameters.push(category);
+  }
+
+  fetchAllReviewsSQL += `GROUP BY reviews.review_id 
+  ORDER BY created_at DESC`;
+
+  return db.query(fetchAllReviewsSQL, queryParameters).then(({ rows }) => {
+    console.log(rows);
+    return rows;
+  });
 };
 
 exports.fetchCommentsByReviewId = (reviewId) => {
   return db
     .query(
       `SELECT * FROM comments 
-       WHERE review_id = $1 
+       WHERE review_id = ($1) 
        ORDER BY created_at DESC`,
       [reviewId]
     )

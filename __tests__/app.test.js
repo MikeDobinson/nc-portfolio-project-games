@@ -38,29 +38,45 @@ describe('invalid endpoint', () => {
   });
 });
 
-describe('/api/reviews', () => {
-  it('should return an array of review objects sorted by created_at in descending order', () => {
-    return request(app)
-      .get('/api/reviews')
-      .expect(200)
-      .then(({ body }) => {
-        const { reviews } = body;
-        expect(reviews).toBeSortedBy('created_at', { descending: true });
-        expect(reviews).toHaveLength(13);
-        reviews.forEach((review) => {
-          expect(review).toMatchObject({
-            owner: expect.any(String),
-            title: expect.any(String),
-            review_id: expect.any(Number),
-            category: expect.any(String),
-            review_img_url: expect.any(String),
-            created_at: expect.any(String),
-            votes: expect.any(Number),
-            designer: expect.any(String),
-            comment_count: expect.any(Number),
+describe.only('/api/reviews', () => {
+  describe('GET', () => {
+    it.only('should return an array of review objects sorted by created_at in descending order', () => {
+      return request(app)
+        .get('/api/reviews')
+        .expect(200)
+        .then(({ body }) => {
+          const { reviews } = body;
+          expect(reviews).toBeSortedBy('created_at', { descending: true });
+          expect(reviews).toHaveLength(13);
+          reviews.forEach((review) => {
+            expect(review).toMatchObject({
+              owner: expect.any(String),
+              title: expect.any(String),
+              review_id: expect.any(Number),
+              category: expect.any(String),
+              review_img_url: expect.any(String),
+              created_at: expect.any(String),
+              votes: expect.any(Number),
+              designer: expect.any(String),
+              comment_count: expect.any(Number),
+            });
           });
         });
-      });
+    });
+  });
+  describe('QUERIES', () => {
+    it('return an array of review objects where all categories match an input', () => {
+      return request(app)
+        .get('/api/reviews?category=dexterity')
+        .expect(200)
+        .then(({ body }) => {
+          const { reviews } = body;
+          expect(reviews.length).not.toBe(0);
+          reviews.forEach((review) => {
+            expect(review.category).toBe('dexterity');
+          });
+        });
+    });
   });
 });
 
