@@ -39,7 +39,7 @@ describe('invalid endpoint', () => {
   });
 });
 
-describe.only('/api/reviews', () => {
+describe('/api/reviews', () => {
   describe('GET', () => {
     it('should return an array of review objects sorted by created_at in descending order', () => {
       return request(app)
@@ -79,13 +79,34 @@ describe.only('/api/reviews', () => {
             });
           });
       });
-      it.only('returns 404 if given category is not present in the table', () => {
+      it('returns 404 if given category is not present in the table', () => {
         return request(app)
           .get('/api/reviews?category=video')
           .expect(404)
           .then(({ body }) => {
             const { msg } = body;
             expect(msg).toBe('Reviews not found');
+          });
+      });
+    });
+    describe('order', () => {
+      it('should be able to change order of sort', () => {
+        return request(app)
+          .get('/api/reviews?order=ASC')
+          .expect(200)
+          .then(({ body }) => {
+            const { reviews } = body;
+            console.log(reviews);
+            expect(reviews).toBeSortedBy('created_at', { ascending: true });
+          });
+      });
+      it('should return 400 if anything other than ASC or DESC are input', () => {
+        return request(app)
+          .get('/api/reviews?order=ABC')
+          .expect(400)
+          .then(({ body }) => {
+            const { msg } = body;
+            expect(msg).toBe('Invalid query');
           });
       });
     });

@@ -18,8 +18,11 @@ exports.fetchReviewById = (reviewId) => {
     });
 };
 
-exports.fetchAllReviews = (category) => {
+exports.fetchAllReviews = (category, order = 'DESC') => {
   const queryParameters = [];
+  if (!['ASC', 'DESC'].includes(order)) {
+    return Promise.reject({ status: 400, msg: 'Invalid query' });
+  }
   let fetchAllReviewsSQL = `
   SELECT 
     reviews.category, reviews.created_at, 
@@ -39,7 +42,7 @@ exports.fetchAllReviews = (category) => {
   }
 
   fetchAllReviewsSQL += `GROUP BY reviews.review_id 
-  ORDER BY created_at DESC`;
+  ORDER BY created_at ${order}`;
 
   return db.query(fetchAllReviewsSQL, queryParameters).then(({ rows }) => {
     if (rows.length === 0) {
