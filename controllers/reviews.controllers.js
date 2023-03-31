@@ -18,9 +18,13 @@ exports.getReviewById = (req, res, next) => {
 
 exports.getAllReviews = (req, res, next) => {
   const { category } = req.query;
-  fetchAllReviews(category).then((reviews) => {
-    res.status(200).send({ reviews });
-  });
+  fetchAllReviews(category)
+    .then((reviews) => {
+      res.status(200).send({ reviews });
+    })
+    .catch((err) => {
+      next(err);
+    });
 };
 
 exports.getCommentsByReviewId = (req, res, next) => {

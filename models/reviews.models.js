@@ -42,8 +42,11 @@ exports.fetchAllReviews = (category) => {
   ORDER BY created_at DESC`;
 
   return db.query(fetchAllReviewsSQL, queryParameters).then(({ rows }) => {
-    console.log(rows);
-    return rows;
+    if (rows.length === 0) {
+      return Promise.reject({ status: 404, msg: 'Reviews not found' });
+    } else {
+      return rows;
+    }
   });
 };
 

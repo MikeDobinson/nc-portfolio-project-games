@@ -4,6 +4,7 @@ const seed = require('../db/seeds/seed');
 const testData = require('../db/data/test-data/');
 const connection = require('../db/connection');
 const { expect } = require('@jest/globals');
+const bodyParser = require('body-parser');
 
 beforeEach(() => seed(testData));
 afterAll(() => connection.end());
@@ -40,7 +41,7 @@ describe('invalid endpoint', () => {
 
 describe.only('/api/reviews', () => {
   describe('GET', () => {
-    it.only('should return an array of review objects sorted by created_at in descending order', () => {
+    it('should return an array of review objects sorted by created_at in descending order', () => {
       return request(app)
         .get('/api/reviews')
         .expect(200)
@@ -65,17 +66,28 @@ describe.only('/api/reviews', () => {
     });
   });
   describe('QUERIES', () => {
-    it('return an array of review objects where all categories match an input', () => {
-      return request(app)
-        .get('/api/reviews?category=dexterity')
-        .expect(200)
-        .then(({ body }) => {
-          const { reviews } = body;
-          expect(reviews.length).not.toBe(0);
-          reviews.forEach((review) => {
-            expect(review.category).toBe('dexterity');
+    describe('category', () => {
+      it('return an array of review objects where all categories match an input', () => {
+        return request(app)
+          .get('/api/reviews?category=dexterity')
+          .expect(200)
+          .then(({ body }) => {
+            const { reviews } = body;
+            expect(reviews.length).not.toBe(0);
+            reviews.forEach((review) => {
+              expect(review.category).toBe('dexterity');
+            });
           });
-        });
+      });
+      it.only('returns 404 if given category is not present in the table', () => {
+        return request(app)
+          .get('/api/reviews?category=video')
+          .expect(404)
+          .then(({ body }) => {
+            const { msg } = body;
+            expect(msg).toBe('Reviews not found');
+          });
+      });
     });
   });
 });
