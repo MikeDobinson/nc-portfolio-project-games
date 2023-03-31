@@ -224,3 +224,34 @@ describe('/api/reviews', () => {
       });
   });
 });
+
+describe('/api/comments/:comment_id', () => {
+  describe('DELETE', () => {
+    it('returns 204 and deletes the relevant comment from the table', () => {
+      return request(app)
+        .delete('/api/comments/2')
+        .expect(204)
+        .then(({ body }) => {
+          expect(body).toEqual({});
+        });
+    });
+    it('returns 404 if given a comment ID that does not exist/', () => {
+      return request(app)
+        .delete('/api/comments/999')
+        .expect(404)
+        .then(({ body }) => {
+          const { msg } = body;
+          expect(msg).toBe('No comment found with that ID');
+        });
+    });
+    it('returns 400 if given a comment ID of wrong type', () => {
+      return request(app)
+        .delete('/api/comments/number')
+        .expect(400)
+        .then(({ body }) => {
+          const { msg } = body;
+          expect(msg).toBe('Invalid request');
+        });
+    });
+  });
+});
