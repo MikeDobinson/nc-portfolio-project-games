@@ -96,7 +96,6 @@ describe('/api/reviews', () => {
           .expect(200)
           .then(({ body }) => {
             const { reviews } = body;
-            console.log(reviews);
             expect(reviews).toBeSortedBy('created_at', { ascending: true });
           });
       });
@@ -107,6 +106,26 @@ describe('/api/reviews', () => {
           .then(({ body }) => {
             const { msg } = body;
             expect(msg).toBe('Invalid query');
+          });
+      });
+    });
+    describe('sorted_by', () => {
+      it('should change the key that the array is sorted by', () => {
+        return request(app)
+          .get('/api/reviews?sorted_by=review_id')
+          .expect(200)
+          .then(({ body }) => {
+            const { reviews } = body;
+            expect(reviews).toBeSortedBy('review_id', { descending: true });
+          });
+      });
+      it('should return 400 if anything other than existing table columns are input', () => {
+        return request(app)
+          .get('/api/reviews?sorted_by=anything')
+          .expect(400)
+          .then(({ body }) => {
+            const { msg } = body;
+            expect(msg).toBe('Bad sort query');
           });
       });
     });

@@ -18,11 +18,32 @@ exports.fetchReviewById = (reviewId) => {
     });
 };
 
-exports.fetchAllReviews = (category, order = 'DESC') => {
+exports.fetchAllReviews = (
+  category,
+  order = 'DESC',
+  sorted_by = 'created_at'
+) => {
   const queryParameters = [];
   if (!['ASC', 'DESC'].includes(order)) {
     return Promise.reject({ status: 400, msg: 'Invalid query' });
   }
+
+  if (
+    ![
+      'category',
+      'created_at',
+      'designer',
+      'owner',
+      'review_id',
+      'review_img_url',
+      'title',
+      'votes',
+      'comment_count',
+    ].includes(sorted_by)
+  ) {
+    return Promise.reject({ status: 400, msg: 'Bad sort query' });
+  }
+
   let fetchAllReviewsSQL = `
   SELECT 
     reviews.category, reviews.created_at, 
@@ -42,7 +63,7 @@ exports.fetchAllReviews = (category, order = 'DESC') => {
   }
 
   fetchAllReviewsSQL += `GROUP BY reviews.review_id 
-  ORDER BY created_at ${order}`;
+  ORDER BY ${sorted_by} ${order}`;
 
   return db.query(fetchAllReviewsSQL, queryParameters).then(({ rows }) => {
     if (rows.length === 0) {
