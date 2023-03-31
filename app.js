@@ -13,6 +13,7 @@ const {
   handleWrongFilepathErrors,
 } = require('./controllers/errors.controllers');
 const { deleteCommentById } = require('./controllers/comments.controllers');
+const { getAllUsers } = require('./controllers/users.controllers');
 const express = require('express');
 const app = express();
 
@@ -22,6 +23,7 @@ app.get('/api/categories', getAllCategories);
 app.get('/api/reviews/:review_id', getReviewById);
 app.get('/api/reviews', getAllReviews);
 app.get('/api/reviews/:review_id/comments', getCommentsByReviewId);
+app.get('/api/users', getAllUsers);
 
 app.post('/api/reviews/:review_id/comments', postCommentOnReviewId);
 
