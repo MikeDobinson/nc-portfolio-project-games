@@ -3,18 +3,24 @@ const db = require('../db/connection');
 exports.fetchReviewById = (reviewId) => {
   return db
     .query(
-      `SELECT * FROM reviews 
-       WHERE review_id = $1`,
+      `SELECT reviews.* , COUNT(comments.review_id) AS comment_count 
+  FROM 
+  reviews
+  JOIN comments ON reviews.review_id = comments.review_id 
+  WHERE 
+  reviews.review_id = $1
+  GROUP BY reviews.review_id;
+`,
       [reviewId]
     )
-    .then((result) => {
-      if (!result.rows.length) {
+    .then(({ rows }) => {
+      if (!rows.length) {
         return Promise.reject({
-          msg: 'No review found with that ID',
           status: 404,
+          msg: 'No review found with that ID',
         });
       }
-      return result.rows[0];
+      return rows[0];
     });
 };
 
@@ -83,7 +89,9 @@ exports.fetchCommentsByReviewId = (reviewId) => {
       [reviewId]
     )
     .then((result) => {
-      return result.rows;
+      const { rows } = result;
+
+      return rows;
     });
 };
 

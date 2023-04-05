@@ -3,12 +3,13 @@ const app = require('../app');
 const seed = require('../db/seeds/seed');
 const testData = require('../db/data/test-data/');
 const connection = require('../db/connection');
+const { expect } = require('@jest/globals');
 
 beforeEach(() => seed(testData));
 afterAll(() => connection.end());
 
-describe('/api/categories', () => {
-  it('GET 200: returns an array of category objects, with each object having keys of `slug` and `description`', () => {
+describe.only('/api/categories', () => {
+  it('200: returns an array of category objects, with each object having keys of `slug` and `description`', () => {
     return request(app)
       .get('/api/categories')
       .expect(200)
@@ -39,7 +40,7 @@ describe('invalid endpoint', () => {
 
 describe('/api/reviews', () => {
   describe('GET', () => {
-    it('should return an array of review objects sorted by created_at in descending order', () => {
+    it('200: returns an array of review objects sorted by created_at in descending order', () => {
       return request(app)
         .get('/api/reviews')
         .expect(200)
@@ -65,7 +66,7 @@ describe('/api/reviews', () => {
   });
   describe('QUERIES', () => {
     describe('category', () => {
-      it('return an array of review objects where all categories match an input', () => {
+      it('200: returns an array of review objects where all categories match an input', () => {
         return request(app)
           .get('/api/reviews?category=dexterity')
           .expect(200)
@@ -77,7 +78,7 @@ describe('/api/reviews', () => {
             });
           });
       });
-      it('returns 404 if given category is not present in the table', () => {
+      it('404: if given category is not present in the table', () => {
         return request(app)
           .get('/api/reviews?category=video')
           .expect(404)
@@ -88,7 +89,7 @@ describe('/api/reviews', () => {
       });
     });
     describe('order', () => {
-      it('should be able to change order of sort', () => {
+      it('200: can change order of sort', () => {
         return request(app)
           .get('/api/reviews?order=ASC')
           .expect(200)
@@ -97,7 +98,7 @@ describe('/api/reviews', () => {
             expect(reviews).toBeSortedBy('created_at', { ascending: true });
           });
       });
-      it('should return 400 if anything other than ASC or DESC are input', () => {
+      it('400: if anything other than ASC or DESC are input', () => {
         return request(app)
           .get('/api/reviews?order=ABC')
           .expect(400)
@@ -108,7 +109,7 @@ describe('/api/reviews', () => {
       });
     });
     describe('sort_by', () => {
-      it('should change the key that the array is sorted by', () => {
+      it('200: change the key that the array is sorted by', () => {
         return request(app)
           .get('/api/reviews?sort_by=review_id')
           .expect(200)
@@ -117,7 +118,7 @@ describe('/api/reviews', () => {
             expect(reviews).toBeSortedBy('review_id', { descending: true });
           });
       });
-      it('should return 400 if anything other than existing table columns are input', () => {
+      it('400: wrong query input', () => {
         return request(app)
           .get('/api/reviews?sort_by=anything')
           .expect(400)
@@ -128,7 +129,7 @@ describe('/api/reviews', () => {
       });
     });
     describe('multiple queries', () => {
-      it('is able to handle multiple queries at once', () => {
+      it('200: can handle multiple queries at once', () => {
         return request(app)
           .get('/api/reviews?category=social deduction&sort_by=owner&order=ASC')
           .expect(200)
@@ -146,7 +147,7 @@ describe('/api/reviews', () => {
 
 describe('/api/reviews/:review_id', () => {
   describe('GET', () => {
-    it('returns an object with the correct keys', () => {
+    it('200: returns an object with the correct keys', () => {
       return request(app)
         .get('/api/reviews/2')
         .expect(200)
@@ -166,7 +167,17 @@ describe('/api/reviews/:review_id', () => {
           });
         });
     });
-    it('returns with error if an unassigned review ID is entered', () => {
+    it('200: returns a review object with a comment_count key representing total count of all reviews with this id', () => {
+      return request(app)
+        .get('/api/reviews/3')
+        .expect(200)
+        .then(({ body }) => {
+          const { review } = body;
+          expect(review.length).not.toBe(0);
+          expect(review).toHaveProperty('comment_count');
+        });
+    });
+    it('404: returns with error if an unassigned review ID is entered', () => {
       return request(app)
         .get('/api/reviews/99')
         .expect(404)
@@ -175,7 +186,7 @@ describe('/api/reviews/:review_id', () => {
           expect(msg).toBe('No review found with that ID');
         });
     });
-    it('returns with error if impossible review ID is entered', () => {
+    it('400: returns with error if impossible review ID is entered', () => {
       return request(app)
         .get('/api/reviews/not-a-number')
         .expect(400)
@@ -186,7 +197,7 @@ describe('/api/reviews/:review_id', () => {
     });
   });
   describe('PATCH', () => {
-    it('returns 200 with the updated review object', () => {
+    it('200: returns with the updated review object', () => {
       return request(app)
         .patch('/api/reviews/3')
         .send({ inc_votes: 2 })
@@ -196,25 +207,25 @@ describe('/api/reviews/:review_id', () => {
           expect(updatedReview.votes).toBe(7);
         });
     });
-    it('should return 400 if given an ID of the wrong data type', () => {
+    it('400: wrong data type', () => {
       return request(app)
         .patch('/api/reviews/number')
         .send({ inc_votes: 2 })
         .expect(400);
     });
-    it('should return 404 if given an ID that is not yet assigned to a review', () => {
+    it('404: if given an ID that is not yet assigned to a review', () => {
       return request(app)
         .patch('/api/reviews/999')
         .send({ inc_votes: 2 })
         .expect(404);
     });
-    it('should return 400 if given an object with the wrong key', () => {
+    it('400: if given an object with the wrong key', () => {
       return request(app)
         .patch('/api/reviews/10')
         .send({ incvotes: 2 })
         .expect(400);
     });
-    it('returns 400 if given an object with the wrong value type', () => {
+    it('400: if given an object with the wrong value type', () => {
       return request(app)
         .patch('/api/reviews/10')
         .send({ inc_votes: 'hello' })
@@ -225,7 +236,7 @@ describe('/api/reviews/:review_id', () => {
 
 describe('/api/reviews/:review_id/comments', () => {
   describe('GET', () => {
-    it('returns an array of comments sorted by created_at in desc order', () => {
+    it('200: returns an array of comments sorted by created_at in desc order', () => {
       return request(app)
         .get('/api/reviews/2/comments')
         .expect(200)
@@ -246,7 +257,7 @@ describe('/api/reviews/:review_id/comments', () => {
           });
         });
     });
-    it('returns 200: no comments found if no comments assigned to an existing review ', () => {
+    it('200: returns no comments found if no comments assigned to an existing review ', () => {
       return request(app)
         .get('/api/reviews/10/comments')
         .expect(200)
@@ -255,15 +266,15 @@ describe('/api/reviews/:review_id/comments', () => {
           expect(comments).toEqual([]);
         });
     });
-    it('returns 404 if url given with review ID that is unassigned', () => {
+    it('404: if url given with review ID that is unassigned', () => {
       return request(app).get('/api/reviews/999/comments').expect(404);
     });
-    it('returns 400 if url given with review ID of wrong type', () => {
+    it('400: if url given with review ID of wrong type', () => {
       return request(app).get('/api/reviews/number/comments').expect(400);
     });
   });
   describe('POST', () => {
-    it('returns 201 after a succesful post ', () => {
+    it('201: succesful post ', () => {
       return request(app)
         .post('/api/reviews/3/comments')
         .send({ username: 'dav3rid', body: 'great review' })
@@ -280,7 +291,7 @@ describe('/api/reviews/:review_id/comments', () => {
           });
         });
     });
-    it('returns 400 if trying to post to a review ID of invalid type', () => {
+    it('400: if trying to post to a review ID of invalid type', () => {
       return request(app)
         .post('/api/reviews/number/comments')
         .send({ username: 'dav3rid', body: 'great review' })
@@ -290,7 +301,7 @@ describe('/api/reviews/:review_id/comments', () => {
           expect(msg).toBe('Invalid request');
         });
     });
-    it('returns 404 if trying to post to a review ID that doesnt exist yet', () => {
+    it('404: if trying to post to a review ID that doesnt exist yet', () => {
       return request(app)
         .post('/api/reviews/999/comments')
         .send({ username: 'dav3rid', body: 'great review' })
@@ -300,7 +311,7 @@ describe('/api/reviews/:review_id/comments', () => {
           expect(msg).toBe('No review found with that ID');
         });
     });
-    it('returns 400 if trying to post a comment in the wrong format', () => {
+    it('400: if trying to post a comment in the wrong format', () => {
       return request(app)
         .post('/api/reviews/3/comments')
         .send({ body: 'good review' })
@@ -310,7 +321,7 @@ describe('/api/reviews/:review_id/comments', () => {
           expect(msg).toBe('Invalid format');
         });
     });
-    it('returns 404 if username does not exist in user db', () => {
+    it('404: if username does not exist in user db', () => {
       return request(app)
         .post('/api/reviews/3/comments')
         .send({ username: 'mike_d', body: 'good review' })
@@ -320,7 +331,7 @@ describe('/api/reviews/:review_id/comments', () => {
           expect(msg).toBe('User not found');
         });
     });
-    it('returns 200 and works as normal if extra kvs are added on the object, ignoring them', () => {
+    it('200: ignores extra kvs on the object,', () => {
       return request(app)
         .post('/api/reviews/3/comments')
         .send({
@@ -346,7 +357,7 @@ describe('/api/reviews/:review_id/comments', () => {
 
 describe('/api/comments/:comment_id', () => {
   describe('DELETE', () => {
-    it('returns 204 and deletes the relevant comment from the table', () => {
+    it('204: deletes the relevant comment from the table', () => {
       return request(app)
         .delete('/api/comments/2')
         .expect(204)
@@ -362,7 +373,7 @@ describe('/api/comments/:comment_id', () => {
           expect(rows.length).toBe(0);
         });
     });
-    it('returns 404 if given a comment ID that does not exist/', () => {
+    it('404: if given a comment ID that does not exist/', () => {
       return request(app)
         .delete('/api/comments/999')
         .expect(404)
@@ -371,7 +382,7 @@ describe('/api/comments/:comment_id', () => {
           expect(msg).toBe('No comment found with that ID');
         });
     });
-    it('returns 400 if given a comment ID of wrong type', () => {
+    it('400: if given a comment ID of wrong type', () => {
       return request(app)
         .delete('/api/comments/number')
         .expect(400)
@@ -385,7 +396,7 @@ describe('/api/comments/:comment_id', () => {
 
 describe('/api/users', () => {
   describe('GET', () => {
-    it('returns 200 with an array of all users that match the correct user object', () => {
+    it('200: returns an array of all users that match the correct user object', () => {
       return request(app)
         .get('/api/users')
         .expect(200)
